@@ -105,3 +105,39 @@ if s:UseTmuxNavigatorMappings()
   nnoremap <silent> <c-l> :TmuxNavigateRight<cr>
   nnoremap <silent> <c-\> :TmuxNavigatePrevious<cr>
 endif
+
+command! TmuxTabLeft call s:TmuxTabCmd('p')
+command! TmuxTabRight call s:TmuxTabCmd('n')
+function! s:TmuxTabCmd(direction)
+  if s:InTmuxSession()
+    call s:TmuxAwareTab(a:direction)
+  else
+    call s:VimTab(a:direction)
+  endif
+endfunction
+
+function! s:TmuxAwareTab(direction)
+  let tab_number = tabpagenr()
+  let number_of_tabs = tabpagenr('$')
+  if a:direction == 'p'
+    if tab_number == 1
+      call s:TmuxCommand("previous-window")
+    else
+      call s:VimTab(a:direction)
+    endif
+  elseif a:direction == 'n'
+    if tab_number == tabpagenr('$')
+      call s:TmuxCommand("next-window")
+    else
+      call s:VimTab(a:direction)
+    endif
+  endif
+endfunction
+
+function! s:VimTab(direction)
+  try
+    execute 'tab' . a:direction
+  catch
+    echohl ErrorMsg | echo 'E11: Invalid in command-line window; <CR> executes, CTRL-C quits: wincmd k' | echohl None
+  endtry
+endfunction
